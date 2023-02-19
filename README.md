@@ -1,3 +1,12 @@
 # Physics Simulation
 
 Simple and robust simulation of bodies running (hopefully) in real time.
+
+# Setup
+- use premake5 for easy compile and linking. Using [this premake tutorial](https://github.com/premake/premake-core/wiki/Tutorial-Premake-example-with-GLFW-and-OpenGL) and [this reddit post](https://www.reddit.com/r/opengl/comments/rerqhf/simple_glfw_application_template_and_instructions/) to set it up for linux.
+
+# Dependencies
+
+- glfw
+- glad
+- [boost: ](https://www.boost.org/doc/libs/1_58_0/libs/multi_array/doc/user.html)
