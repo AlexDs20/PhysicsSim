@@ -36,6 +36,9 @@ workspace "Hello Premake"
   targetdir ("build/bin/%{prj.name}/%{cfg.longname}")
   objdir ("build/obj/%{prj.name}/%{cfg.longname}")
 
+  include "deps/glfw.lua"
+  include "deps/glad.lua"
+
 
 -- This function includes GLFW's header files
 function includeGLFW()
@@ -93,3 +96,23 @@ project "App"
 
   filter { "system:not windows" }
     links { "GL" }
+
+
+project "OpenGL"
+  kind "WindowedApp"
+  language "C++"
+
+  includedirs { "deps/glad/include", "deps/GLFW/include/" }
+
+  files "projects/00-opengl/**"
+  links{ "GLFW", "GLAD" }
+
+  filter "system:linux"
+    links{ "dl", "pthread" }
+
+    defines{ "_X11" }
+
+  filter "system:windows"
+    defines { "_WINDOWS" }
+
+
