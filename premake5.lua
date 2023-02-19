@@ -53,7 +53,7 @@ function linkGLFW()
 end
 
 -- Our first project, the static library
-project "ExampleLib"
+project "Lib"
   -- kind is used to indicate the type of this project.
   kind "StaticLib"
 
@@ -66,13 +66,13 @@ project "ExampleLib"
   -- We need GLFW, so we include it
   includeGLFW()
 
-function useExampleLib()
+function useLib()
   -- The library's public headers
   includedirs "projects/lib"
 
   -- We link against a library that's in the same workspace, so we can just
   -- use the project name - premake is really smart and will handle everything for us.
-  links "ExampleLib"
+  links "Lib"
 
   -- Users of ExampleLib need to link GLFW
   linkGLFW()
@@ -85,7 +85,7 @@ project "App"
 
   -- We also need the headers
   includedirs "projects/lib"
-  useExampleLib()
+  useLib()
 
   -- Now we need to add the OpenGL system libraries
   filter { "system:windows" }
