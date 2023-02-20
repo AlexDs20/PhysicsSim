@@ -17,13 +17,13 @@ workspace "Hello Premake"
     -- We use filters to set options, a new feature of Premake5.
     -- We now only set settings for the Debug configuration
     filter { "configurations:Debug" }
-      -- We want debug symbols in our debug config
-      symbols "On"
+        -- We want debug symbols in our debug config
+        symbols "On"
 
     -- We now only set settings for Release
     filter { "configurations:Release" }
-      -- Release should be optimized
-      optimize "On"
+        -- Release should be optimized
+        optimize "On"
 
     -- Reset the filter for other settings
     filter { }
@@ -36,8 +36,9 @@ workspace "Hello Premake"
     targetdir ("build/bin/%{prj.name}/%{cfg.longname}")
     objdir ("build/obj/%{prj.name}/%{cfg.longname}")
 
-    include "deps/glfw.lua"
-    include "deps/glad.lua"
+
+include "deps/glfw.lua"
+include "deps/glad.lua"
 
 
 -- Our first project, the static library
@@ -64,29 +65,27 @@ project "TestOpenGL"
     includedirs "projects/lib"
     links { "Lib", "GLFW" }
 
-     -- Now we need to add the OpenGL system libraries
-     filter { "system:windows" }
-       links { "OpenGL32" }
+    -- Now we need to add the OpenGL system libraries
+    filter { "system:windows" }
+        links { "OpenGL32" }
 
     filter { "system:not windows" }
-      links { "GL" }
+        links { "GL" }
 
 
 project "OpenGL"
     kind "WindowedApp"
     language "C++"
 
-    includedirs { "deps/glad/include", "deps/glfw/include/" }
+    includedirs { "deps/glad/include/", "deps/glfw/include/" }
 
     files "projects/00-opengl/**"
-    links{ "GLFW", "GLAD" }
+    links{ "GLAD", "GLFW" }
 
     filter "system:linux"
-      links{ "dl", "pthread" }
+        links{ "dl", "pthread"}
 
-      defines{ "_X11" }
+        defines{ "_X11" }
 
     filter "system:windows"
-      defines { "_WINDOWS" }
-
-
+        defines { "_WINDOWS" }
