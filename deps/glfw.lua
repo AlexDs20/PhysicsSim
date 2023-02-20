@@ -3,15 +3,10 @@ project "GLFW"
     language "C"
     architecture "x86_64"
 
-    targetdir "../bin/%{cfg.buildcfg}"
-    objdir "../obj/%{cfg.buildcfg}"
-
     includedirs { "glfw/include/" }
 
     files
     {
---      "glfw/include/GLFW/glfw3.h",
---      "glfw/include/GLFW/glfw3native.h",
         "glfw/src/glfw_config.h",
         "glfw/src/context.c",
         "glfw/src/init.c",
@@ -79,8 +74,8 @@ project "GLFW"
 
     filter "configurations:Debug"
         runtime "Debug"
-        symbols "on"
+        symbols "On"
 
     filter "configurations:Release"
         runtime "Release"
-        optimize "on"
+        optimize "On"
