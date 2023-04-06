@@ -25,6 +25,17 @@ workspace "Hello Premake"
         -- Release should be optimized
         optimize "On"
 
+    filter "system:linux"
+        links{ "dl", "pthread"}
+
+        defines{ "_X11" }
+
+    filter "system:windows"
+        defines { "_WINDOWS" }
+
+    filter "system:MAC"
+        defines { "_MAC" }
+
     -- Reset the filter for other settings
     filter { }
 
@@ -39,21 +50,6 @@ workspace "Hello Premake"
 
 include "deps/glfw.lua"
 include "deps/glad.lua"
+include "deps/glm.lua"
 
-
-project "OpenGL"
-    kind "WindowedApp"
-    language "C++"
-
-    includedirs { "deps/glad/include/", "deps/glfw/include/" }
-
-    files "projects/00-opengl/**"
-    links{ "GLAD", "GLFW" }
-
-    filter "system:linux"
-        links{ "dl", "pthread"}
-
-        defines{ "_X11" }
-
-    filter "system:windows"
-        defines { "_WINDOWS" }
+include "projects/01-bouncing_ball"
