@@ -19,7 +19,7 @@ const unsigned int SCR_WIDTH = 1024;
 const unsigned int SCR_HEIGHT = 768;
 
 // camera
-Camera camera(glm::vec3(0.0f, 2.0f, 0.0f));
+Camera camera(glm::vec3(0.5f, 0.5f, 0.5f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -27,6 +27,13 @@ bool firstMouse = true;
 // Frame time (so that movement is same regardless of fps)
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
+
+
+float energy(glm::vec3 pos, glm::vec3 v){
+    glm::vec3 g(0.0f, -9.81f, 0.0f);
+    return g.y*pos.y + 0.5 * dot(v, v);
+}
+
 
 void update(glm::vec3& pos, glm::vec3& v, float dt, glm::vec3 centerBox, float r){
     /*
@@ -40,28 +47,33 @@ void update(glm::vec3& pos, glm::vec3& v, float dt, glm::vec3 centerBox, float r
         xi = xi-1 + v * dt
     */
 
-    glm::vec3 g(0.0f, -9.81f, 0.0f);
+    glm::vec3 g(0.0f, -10.f, 0.0f);
 
-    v += g * (float)dt;
-    pos += v * (float)dt;
+    int n_substeps = 1000;
+    for (int i = 0; i!= n_substeps; ++i){
+        float Energy = energy(pos, v);
 
-    if (pos.y - r < centerBox.y - 0.5){
-        pos.y = centerBox.y - 0.5 + r;
-        v.y = -v.y;
-    }
-    if (pos.x + r > centerBox.x + 0.5 ){
-        pos.x = centerBox.x + 0.5 - r;
-        v.x = -v.x;
-    } else if (pos.x - r < centerBox.x - 0.5){
-        pos.x = centerBox.x - 0.5 + r;
-        v.x = -v.x;
-    }
-    if (pos.z + r > centerBox.z + 0.5 ){
-        pos.z = centerBox.z + 0.5 - r;
-        v.z = -v.z;
-    } else if (pos.z - r < centerBox.z - 0.5){
-        pos.z = centerBox.z - 0.5 + r;
-        v.z = -v.z;
+        v += g * (float)dt * (1/(float)n_substeps);
+        pos += (v * (float)dt) * (1/(float)n_substeps);
+
+        if (pos.y - r <= centerBox.y - 0.5){
+            pos.y = centerBox.y - 0.5 + r;
+            v.y = -v.y;
+        }
+        if (pos.x + r >= centerBox.x + 0.5 ){
+            pos.x = centerBox.x + 0.5 - r;
+            v.x = -v.x;
+        } else if (pos.x - r <= centerBox.x - 0.5){
+            pos.x = centerBox.x - 0.5 + r;
+            v.x = -v.x;
+        }
+        if (pos.z + r >= centerBox.z + 0.5 ){
+            pos.z = centerBox.z + 0.5 - r;
+            v.z = -v.z;
+        } else if (pos.z - r <= centerBox.z - 0.5){
+            pos.z = centerBox.z - 0.5 + r;
+            v.z = -v.z;
+        }
     }
 };
 
@@ -319,7 +331,7 @@ int main(int argc, char** argv)
     }
 
     glm::vec3 s_position(0.0f, 0.5f, 0.0f);
-    glm::vec3 s_velocity(0.2f, 0.0f, 0.15f);
+    glm::vec3 s_velocity(0.2f, 0.1f, 0.3f);
     glm::vec3 s_color(0.7f, 0.2f, 0.4f);
 
     unsigned int VBO_s, VAO_s, EBO_s;
@@ -348,6 +360,9 @@ int main(int argc, char** argv)
         float time = glfwGetTime();
         deltaTime = time - lastFrame;
         lastFrame = time;
+
+        // Time for frame
+        std::cout << deltaTime << " ms\r" << std::flush;
 
         // process inputs
         processInput(window);
