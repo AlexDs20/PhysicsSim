@@ -173,7 +173,7 @@ int main(int argc, char** argv)
     // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     // Define light stuff
-    glm::vec3 lightPos(0.0f, 1.5f, 0.0f);
+    glm::vec3 lightPos(0.0f, 0.6f, 0.0f);
     glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
 
     glm::vec3 blockColor(1.0f, 0.5f, 0.31f);
@@ -185,10 +185,123 @@ int main(int argc, char** argv)
 
     glEnable(GL_DEPTH_TEST);
 
-    struct Material {
-        glm::vec3 Position;
-        glm::vec3 Velocity;
-    };
+    // Create a sphere
+    std::vector<float> s_vertices;
+    std::vector<float> s_normals;
+    std::vector<float> s_texCoords;
+
+    unsigned int sectorCount = 32;
+    unsigned int stackCount = 16;
+    float radius = 0.1;
+
+    float x, y, z, xy;                              // vertex position
+    float nx, ny, nz, lengthInv = 1.0f / radius;    // vertex normal
+    float s, t;                                     // vertex texCoord
+
+    float sectorStep = 2 * M_PI / sectorCount;
+    float stackStep = M_PI / stackCount;
+    float sectorAngle, stackAngle;
+
+    for(int i = 0; i <= stackCount; ++i)
+    {
+        stackAngle = M_PI / 2 - i * stackStep;        // starting from pi/2 to -pi/2
+        xy = radius * std::cos(stackAngle);             // r * cos(u)
+        z = radius * std::sin(stackAngle);              // r * sin(u)
+
+        // add (sectorCount+1) vertices per stack
+        // the first and last vertices have same position and normal, but different tex coords
+        for(int j = 0; j <= sectorCount; ++j)
+        {
+            sectorAngle = j * sectorStep;           // starting from 0 to 2pi
+
+            // vertex position (x, y, z)
+            x = xy * std::cos(sectorAngle);             // r * cos(u) * cos(v)
+            y = xy * std::sin(sectorAngle);             // r * cos(u) * sin(v)
+            s_vertices.push_back(x);
+            s_vertices.push_back(y);
+            s_vertices.push_back(z);
+
+            // normalized vertex normal (nx, ny, nz)
+            nx = x * lengthInv;
+            ny = y * lengthInv;
+            nz = z * lengthInv;
+            s_vertices.push_back(nx);
+            s_vertices.push_back(ny);
+            s_vertices.push_back(nz);
+
+            // vertex tex coord (s, t) range between [0, 1]
+            s = (float)j / sectorCount;
+            t = (float)i / stackCount;
+            s_texCoords.push_back(s);
+            s_texCoords.push_back(t);
+        }
+    }
+
+    // generate CCW index list of sphere triangles
+    // k1--k1+1
+    // |  / |
+    // | /  |
+    // k2--k2+1
+    std::vector<int> s_indices;
+    std::vector<int> s_lineIndices;
+    int k1, k2;
+    for(int i = 0; i < stackCount; ++i)
+    {
+        k1 = i * (sectorCount + 1);     // beginning of current stack
+        k2 = k1 + sectorCount + 1;      // beginning of next stack
+
+        for(int j = 0; j < sectorCount; ++j, ++k1, ++k2)
+        {
+            // 2 triangles per sector excluding first and last stacks
+            // k1 => k2 => k1+1
+            if(i != 0)
+            {
+                s_indices.push_back(k1);
+                s_indices.push_back(k2);
+                s_indices.push_back(k1 + 1);
+            }
+
+            // k1+1 => k2 => k2+1
+            if(i != (stackCount-1))
+            {
+                s_indices.push_back(k1 + 1);
+                s_indices.push_back(k2);
+                s_indices.push_back(k2 + 1);
+            }
+
+            // store indices for lines
+            // vertical lines for all stacks, k1 => k2
+            s_lineIndices.push_back(k1);
+            s_lineIndices.push_back(k2);
+            if(i != 0)  // horizontal lines except 1st stack, k1 => k+1
+            {
+                s_lineIndices.push_back(k1);
+                s_lineIndices.push_back(k1 + 1);
+            }
+        }
+    }
+
+    glm::vec3 s_position(0.0f, 0.3f, 0.0f);
+    glm::vec3 s_color(0.7f, 0.2f, 0.4f);
+
+    unsigned int VBO_s, VAO_s, EBO_s;
+
+    glGenVertexArrays(1, &VAO_s);
+    glGenBuffers(1, &VBO_s);
+    glGenBuffers(1, &EBO_s);
+
+    glBindVertexArray(VAO_s);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO_s);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * s_vertices.size(), &s_vertices[0], GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_s);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(float) * s_indices.size(), &s_indices[0], GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) (0 * sizeof(float)));
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) (3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
 
     // render loop
     // -----------
@@ -235,6 +348,16 @@ int main(int argc, char** argv)
             blockShader.setMat4f("model", model);
             glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
         }
+
+        // Sphere
+        // Use same shader as for block
+        glBindVertexArray(VAO_s);
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, s_position);
+        blockShader.setMat4f("model", model);
+        blockShader.set3f("objectColor", s_color);
+        glDrawElements(GL_TRIANGLES, (unsigned int)s_indices.size(), GL_UNSIGNED_INT, 0);
+        //glDrawArrays(GL_TRIANGLES, 0, 3);
 
         // Position the light!
         lightShader.use();
