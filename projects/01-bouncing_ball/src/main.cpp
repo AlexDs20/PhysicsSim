@@ -19,7 +19,7 @@ const unsigned int SCR_WIDTH = 1024;
 const unsigned int SCR_HEIGHT = 768;
 
 // camera
-Camera camera(glm::vec3(0.0f, 0.0f, 5.0f));
+Camera camera(glm::vec3(0.0f, 2.0f, 0.0f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -27,6 +27,43 @@ bool firstMouse = true;
 // Frame time (so that movement is same regardless of fps)
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
+
+void update(glm::vec3& pos, glm::vec3& v, float dt, glm::vec3 centerBox, float r){
+    /*
+     F = ma
+     F = m dv/dt
+        dv = (F/m) * dt
+        vi - vi-1 = (F/m) * dt
+        vi = vi-1 + (F/m) * dt
+    v = dx/dt
+        dx = v * dt
+        xi = xi-1 + v * dt
+    */
+
+    glm::vec3 g(0.0f, -9.81f, 0.0f);
+
+    v += g * (float)dt;
+    pos += v * (float)dt;
+
+    if (pos.y - r < centerBox.y - 0.5){
+        pos.y = centerBox.y - 0.5 + r;
+        v.y = -v.y;
+    }
+    if (pos.x + r > centerBox.x + 0.5 ){
+        pos.x = centerBox.x + 0.5 - r;
+        v.x = -v.x;
+    } else if (pos.x - r < centerBox.x - 0.5){
+        pos.x = centerBox.x - 0.5 + r;
+        v.x = -v.x;
+    }
+    if (pos.z + r > centerBox.z + 0.5 ){
+        pos.z = centerBox.z + 0.5 - r;
+        v.z = -v.z;
+    } else if (pos.z - r < centerBox.z - 0.5){
+        pos.z = centerBox.z - 0.5 + r;
+        v.z = -v.z;
+    }
+};
 
 
 int main(int argc, char** argv)
@@ -192,7 +229,7 @@ int main(int argc, char** argv)
 
     unsigned int sectorCount = 32;
     unsigned int stackCount = 16;
-    float radius = 0.1;
+    float radius = 0.05;
 
     float x, y, z, xy;                              // vertex position
     float nx, ny, nz, lengthInv = 1.0f / radius;    // vertex normal
@@ -281,7 +318,8 @@ int main(int argc, char** argv)
         }
     }
 
-    glm::vec3 s_position(0.0f, 0.3f, 0.0f);
+    glm::vec3 s_position(0.0f, 0.5f, 0.0f);
+    glm::vec3 s_velocity(0.2f, 0.0f, 0.15f);
     glm::vec3 s_color(0.7f, 0.2f, 0.4f);
 
     unsigned int VBO_s, VAO_s, EBO_s;
@@ -342,7 +380,7 @@ int main(int argc, char** argv)
         {
             model = glm::mat4(1.0f);
             model = glm::translate(model, cubePositions[i]);
-            model = glm::scale(model, glm::vec3(3.0f, 1.0f, 3.0f));
+            // model = glm::scale(model, glm::vec3(3.0f, 1.0f, 3.0f));
             // float angle = 20.0f * (i+1);
             // model = glm::rotate(model, glm::radians(angle*time), glm::normalize(glm::vec3(0.4f, 1.0f, 0.3f)));
             blockShader.setMat4f("model", model);
@@ -357,7 +395,9 @@ int main(int argc, char** argv)
         blockShader.setMat4f("model", model);
         blockShader.set3f("objectColor", s_color);
         glDrawElements(GL_TRIANGLES, (unsigned int)s_indices.size(), GL_UNSIGNED_INT, 0);
-        //glDrawArrays(GL_TRIANGLES, 0, 3);
+
+        // Move the ball
+        update(s_position, s_velocity, deltaTime, cubePositions[0], radius);
 
         // Position the light!
         lightShader.use();
