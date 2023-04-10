@@ -29,6 +29,13 @@ float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 
+struct Sphere {
+    glm::vec3 pos;
+    glm::vec3 vel;
+    glm::vec3 color;
+    float radius;
+};
+
 float energy(glm::vec3 pos, glm::vec3 v){
     glm::vec3 g(0.0f, -10.f, 0.0f);
     return -g.y*pos.y + 0.5 * dot(v, v);
@@ -49,8 +56,6 @@ void update(glm::vec3& pos, glm::vec3& v, float dt, glm::vec3 centerBox, float r
 
     glm::vec3 g(0.0f, -10.f, 0.0f);
     float dh;
-
-    std::cout << energy(pos, v) << std::endl;
 
     int n_substeps = 300;
     for (int i = 0; i!= n_substeps; ++i){
@@ -356,12 +361,6 @@ int main(int argc, char** argv)
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) (3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
-    struct Sphere {
-        glm::vec3 pos;
-        glm::vec3 vel;
-        glm::vec3 color;
-        float radius;
-    };
 
     std::vector<Sphere> spheres(2);
     spheres[0].pos = glm::vec3(0.0f, 0.5f, 0.0f);
@@ -373,7 +372,6 @@ int main(int argc, char** argv)
     spheres[1].vel = glm::vec3(0.33f, 0.0f, 0.2f);
     spheres[1].color = glm::vec3(0.3f, 0.6f, 0.3f);
     spheres[1].radius = 0.15;
-
 
     // render loop
     // -----------
