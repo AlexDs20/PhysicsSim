@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/random.hpp>
 
 #include <filesystem>
 #include <iostream>
@@ -15,8 +16,8 @@
 #include "utils.hpp"
 
 
-const unsigned int SCR_WIDTH = 1024;
-const unsigned int SCR_HEIGHT = 768;
+const unsigned int SCR_WIDTH = 1920;
+const unsigned int SCR_HEIGHT = 1080;
 
 // camera
 Camera camera(glm::vec3(0.5f, 0.5f, 0.5f));
@@ -34,15 +35,47 @@ struct Sphere {
     glm::vec3 vel;
     glm::vec3 color;
     float radius;
+    float m;
 };
 
 float energy(glm::vec3 pos, glm::vec3 v){
     glm::vec3 g(0.0f, -10.f, 0.0f);
     return -g.y*pos.y + 0.5 * dot(v, v);
-}
+};
 
 
-void update(glm::vec3& pos, glm::vec3& v, float dt, glm::vec3 centerBox, float r){
+void collision(Sphere& s1, Sphere& s2){
+    // elasticity
+    float e = 1.;
+
+    glm::vec3 normal(s2.pos - s1.pos);
+    float d = glm::length(normal);
+
+    if (d > s1.radius + s2.radius)
+        return;
+
+    normal /= d;
+
+    float corr = (s1.radius + s2.radius - d) / 2.0f;
+
+    s1.pos -= corr * normal;
+    s2.pos += corr * normal;
+
+    float v1n = glm::dot(s1.vel, normal);
+    float v2n = glm::dot(s2.vel, normal);
+
+    float v1n_new = ((s1.m * v1n) + (s2.m * v2n) - s2.m * (v1n - v2n) * e)/(s1.m + s2.m);
+    float v2n_new = ((s1.m * v1n) + (s2.m * v2n) - s1.m * (v2n - v1n) * e)/(s1.m + s2.m);
+
+    glm::vec3 v1t = s1.vel - glm::dot(s1.vel, normal) * normal;
+    glm::vec3 v2t = s2.vel - glm::dot(s2.vel, normal) * normal;
+
+    s1.vel = v1t + v1n_new * normal;
+    s2.vel = v2t + v2n_new * normal;
+};
+
+
+void move(Sphere& s, float dt, glm::vec3 centerBox){
     /*
      F = ma
      F = m dv/dt
@@ -53,41 +86,35 @@ void update(glm::vec3& pos, glm::vec3& v, float dt, glm::vec3 centerBox, float r
         dx = v * dt
         xi = xi-1 + v * dt
     */
-
     glm::vec3 g(0.0f, -10.f, 0.0f);
     float dh;
 
-    int n_substeps = 300;
-    for (int i = 0; i!= n_substeps; ++i){
-        float Energy = energy(pos, v);
+    s.vel += g * dt;
+    s.pos += s.vel * dt;
 
-        v += g * (float)dt * (1/(float)n_substeps);
-        pos += (v * (float)dt) * (1/(float)n_substeps);
-
-        if (pos.y - r < centerBox.y - 0.5){
-            // Remove the potential energy gained from the velocity
-            // dE = 0 => mgdh = -mvdv => dv = -gdh/v => v = v - gdh/v
-            dh = centerBox.y - 0.5 - (pos.y - r) ;
-            v.y -= g.y * dh / v.y;
-            pos.y = centerBox.y - 0.5 + r;
-            v.y = -v.y;
-        }
-        if (pos.x + r > centerBox.x + 0.5 ){
-            pos.x = centerBox.x + 0.5 - r;
-            v.x = -v.x;
-        } else if (pos.x - r < centerBox.x - 0.5){
-            pos.x = centerBox.x - 0.5 + r;
-            v.x = -v.x;
-        }
-        if (pos.z + r > centerBox.z + 0.5 ){
-            pos.z = centerBox.z + 0.5 - r;
-            v.z = -v.z;
-        } else if (pos.z - r < centerBox.z - 0.5){
-            pos.z = centerBox.z - 0.5 + r;
-            v.z = -v.z;
-        }
+    if (s.pos.y - s.radius < centerBox.y - 0.5){
+        // Remove the potential energy gained from the velocity
+        // dE = 0 => mgdh = -mvdv => dv = -gdh/v => v = v - gdh/v
+        dh = centerBox.y - 0.5 - (s.pos.y - s.radius) ;
+        s.vel.y -= g.y * dh / s.vel.y;
+        s.pos.y = centerBox.y - 0.5 + s.radius;
+        s.vel.y = -s.vel.y;
     }
-};
+    if (s.pos.x + s.radius > centerBox.x + 0.5 ){
+        s.pos.x = centerBox.x + 0.5 - s.radius;
+        s.vel.x = -s.vel.x;
+    } else if (s.pos.x - s.radius < centerBox.x - 0.5){
+        s.pos.x = centerBox.x - 0.5 + s.radius;
+        s.vel.x = -s.vel.x;
+    }
+    if (s.pos.z + s.radius > centerBox.z + 0.5 ){
+        s.pos.z = centerBox.z + 0.5 - s.radius;
+        s.vel.z = -s.vel.z;
+    } else if (s.pos.z - s.radius < centerBox.z - 0.5){
+        s.pos.z = centerBox.z - 0.5 + s.radius;
+        s.vel.z = -s.vel.z;
+    }
+}
 
 
 int main(int argc, char** argv)
@@ -362,16 +389,39 @@ int main(int argc, char** argv)
     glEnableVertexAttribArray(1);
 
 
-    std::vector<Sphere> spheres(2);
+    std::vector<Sphere> spheres(5);
+
     spheres[0].pos = glm::vec3(0.0f, 0.5f, 0.0f);
     spheres[0].vel = glm::vec3(0.33f, 0.0f, 0.2f);
     spheres[0].color = glm::vec3(0.7f, 0.2f, 0.2f);
     spheres[0].radius = 0.05;
+    spheres[0].m = M_PI * spheres[0].radius * spheres[0].radius;
 
     spheres[1].pos = glm::vec3(0.3f, 0.5f, 0.0f);
     spheres[1].vel = glm::vec3(0.33f, 0.0f, 0.2f);
     spheres[1].color = glm::vec3(0.3f, 0.6f, 0.3f);
     spheres[1].radius = 0.15;
+    spheres[1].m = M_PI * spheres[1].radius * spheres[1].radius;
+
+    spheres[2].pos = glm::vec3(0.3f, 0.1f, 0.0f);
+    spheres[2].vel = glm::vec3(0.33f, 0.0f, 0.2f);
+    spheres[2].color = glm::vec3(0.3f, 0.6f, 0.3f);
+    spheres[2].radius = 0.02;
+    spheres[2].m = M_PI * spheres[2].radius * spheres[2].radius;
+
+    spheres[3].pos = glm::vec3(0.3f, 0.0f, 0.1f);
+    spheres[3].vel = glm::vec3(0.33f, 0.0f, 0.2f);
+    spheres[3].color = glm::vec3(0.3f, 0.6f, 0.3f);
+    spheres[3].radius = 0.07;
+    spheres[3].m = M_PI * spheres[3].radius * spheres[3].radius;
+
+    spheres[4].pos = glm::vec3(0.2f, 0.0f, 0.2f);
+    spheres[4].vel = glm::vec3(0.33f, 0.0f, 0.2f);
+    spheres[4].color = glm::vec3(0.3f, 0.6f, 0.3f);
+    spheres[4].radius = 0.1;
+    spheres[4].m = M_PI * spheres[4].radius * spheres[4].radius;
+
+    unsigned int n_substeps = 300;
 
     // render loop
     // -----------
@@ -383,7 +433,7 @@ int main(int argc, char** argv)
 
         // Time for frame
         std::streamsize prec = std::cout.precision();
-        //std::cout << std::setprecision(5) << deltaTime << " ms\r" << std::setprecision(prec) << std::flush;
+        std::cout << std::setprecision(5) << deltaTime << " ms\r" << std::setprecision(prec) << std::flush;
 
         // process inputs
         processInput(window);
@@ -426,17 +476,29 @@ int main(int argc, char** argv)
         // Sphere
         // Use same shader as for block
         glBindVertexArray(VAO_s);
+
         for (std::vector<Sphere>::size_type i = 0; i!=spheres.size(); ++i){
+            // Draw
             model = glm::mat4(1.0f);
             model = glm::translate(model, spheres[i].pos);
             model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f) * spheres[i].radius);
             blockShader.setMat4f("model", model);
             blockShader.set3f("objectColor", spheres[i].color);
             glDrawElements(GL_TRIANGLES, (unsigned int)s_indices.size(), GL_UNSIGNED_INT, 0);
-            // Move the ball
-            update(spheres[i].pos, spheres[i].vel, deltaTime, cubePositions[0], spheres[i].radius);
-        }
 
+            // Create substeps for stability
+            float dt = deltaTime / n_substeps;
+            for (unsigned int step=0; step!= n_substeps; ++step){
+                // Move the ball i.e. update position and speed
+                move(spheres[i], dt, cubePositions[0]);
+
+                // Check for collisions
+                for (std::vector<Sphere>::size_type j=0; j!=spheres.size(); ++j){
+                    if (i != j)
+                        collision(spheres[i], spheres[j]);
+                }
+            }
+        }
 
         // Position the light!
         lightShader.use();
