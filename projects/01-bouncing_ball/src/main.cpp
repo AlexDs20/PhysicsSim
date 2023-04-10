@@ -46,7 +46,7 @@ float energy(glm::vec3 pos, glm::vec3 v){
 
 void collision(Sphere& s1, Sphere& s2){
     // elasticity
-    float e = 1.;
+    float e = 1.00f;
 
     glm::vec3 normal(s2.pos - s1.pos);
     float d = glm::length(normal);
@@ -389,39 +389,18 @@ int main(int argc, char** argv)
     glEnableVertexAttribArray(1);
 
 
-    std::vector<Sphere> spheres(5);
+    unsigned int n_spheres = 2;
+    std::vector<Sphere> spheres(n_spheres);
 
-    spheres[0].pos = glm::vec3(0.0f, 0.5f, 0.0f);
-    spheres[0].vel = glm::vec3(0.33f, 0.0f, 0.2f);
-    spheres[0].color = glm::vec3(0.7f, 0.2f, 0.2f);
-    spheres[0].radius = 0.05;
-    spheres[0].m = M_PI * spheres[0].radius * spheres[0].radius;
+    for (unsigned int i=0; i!= n_spheres; ++i){
+        spheres[i].pos = glm::ballRand(0.5f)-0.25f;
+        spheres[i].vel = glm::ballRand(2.0f)-1.0f;
+        spheres[i].color = glm::ballRand(1.0f);
+        spheres[i].radius = 0.05;
+        spheres[i].m = M_PI * spheres[i].radius * spheres[i].radius;
+    }
 
-    spheres[1].pos = glm::vec3(0.3f, 0.5f, 0.0f);
-    spheres[1].vel = glm::vec3(0.33f, 0.0f, 0.2f);
-    spheres[1].color = glm::vec3(0.3f, 0.6f, 0.3f);
-    spheres[1].radius = 0.15;
-    spheres[1].m = M_PI * spheres[1].radius * spheres[1].radius;
-
-    spheres[2].pos = glm::vec3(0.3f, 0.1f, 0.0f);
-    spheres[2].vel = glm::vec3(0.33f, 0.0f, 0.2f);
-    spheres[2].color = glm::vec3(0.3f, 0.6f, 0.3f);
-    spheres[2].radius = 0.02;
-    spheres[2].m = M_PI * spheres[2].radius * spheres[2].radius;
-
-    spheres[3].pos = glm::vec3(0.3f, 0.0f, 0.1f);
-    spheres[3].vel = glm::vec3(0.33f, 0.0f, 0.2f);
-    spheres[3].color = glm::vec3(0.3f, 0.6f, 0.3f);
-    spheres[3].radius = 0.07;
-    spheres[3].m = M_PI * spheres[3].radius * spheres[3].radius;
-
-    spheres[4].pos = glm::vec3(0.2f, 0.0f, 0.2f);
-    spheres[4].vel = glm::vec3(0.33f, 0.0f, 0.2f);
-    spheres[4].color = glm::vec3(0.3f, 0.6f, 0.3f);
-    spheres[4].radius = 0.1;
-    spheres[4].m = M_PI * spheres[4].radius * spheres[4].radius;
-
-    unsigned int n_substeps = 300;
+    unsigned int n_substeps = 200;
 
     // render loop
     // -----------
@@ -462,6 +441,7 @@ int main(int argc, char** argv)
 
         glBindVertexArray(VAO);
         // Go through each box to render
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         for (std::vector<glm::vec3>::size_type i=0; i!=cubePositions.size(); ++i)
         {
             model = glm::mat4(1.0f);
@@ -472,6 +452,7 @@ int main(int argc, char** argv)
             blockShader.setMat4f("model", model);
             glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
         }
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
         // Sphere
         // Use same shader as for block
