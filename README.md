@@ -8,4 +8,3 @@ Simple and robust simulation of bodies running (hopefully) in real time.
 # Dependencies
 - glfw
 - glad
-- [boost: ](https://www.boost.org/doc/libs/1_58_0/libs/multi_array/doc/user.html)
