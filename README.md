@@ -8,3 +8,7 @@ Simple and robust simulation of bodies running (hopefully) in real time.
 # Dependencies
 - glfw
 - glad
+- glm
+
+# Preview
+-[](previews/ball.gif)

@@ -389,7 +389,7 @@ int main(int argc, char** argv)
     glEnableVertexAttribArray(1);
 
 
-    unsigned int n_spheres = 2;
+    unsigned int n_spheres = 30;
     std::vector<Sphere> spheres(n_spheres);
 
     for (unsigned int i=0; i!= n_spheres; ++i){
@@ -400,7 +400,7 @@ int main(int argc, char** argv)
         spheres[i].m = M_PI * spheres[i].radius * spheres[i].radius;
     }
 
-    unsigned int n_substeps = 200;
+    unsigned int n_substeps = 5;
 
     // render loop
     // -----------
