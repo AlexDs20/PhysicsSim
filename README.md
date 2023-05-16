@@ -11,4 +11,4 @@ Simple and robust simulation of bodies running (hopefully) in real time.
 - glm
 
 # Preview
--[](previews/ball.gif)
+![](previews/ball.gif)
