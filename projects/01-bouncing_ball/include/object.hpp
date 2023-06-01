@@ -3,6 +3,15 @@
 
 #include <vector>
 
+struct Sphere {
+    glm::vec3 pos;
+    glm::vec3 vel;
+    glm::vec3 color;
+    float radius;
+    float m;
+};
+
+
 class Cube {
     public:
         Cube();
