@@ -49,9 +49,7 @@ int main(int argc, char** argv)
     // Create a cube -> light and box to keep balls inside
     Cube cube;
 
-    std::vector<glm::vec3> cubePositions = {
-        glm::vec3(0.0f,  0.0f,  0.0f),
-    };
+    glm::vec3 cubePosition(0.0f,  0.0f,  0.0f);
 
     // Define light stuff
     glm::vec3 lightPos(0.0f, 0.6f, 0.0f);
@@ -117,15 +115,12 @@ int main(int argc, char** argv)
         blockShader.setMat4f("proj", proj);
         blockShader.setMat4f("view", view);
 
-        // Go through each box to render
+        // Render the box as see-through
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        for (std::vector<glm::vec3>::size_type i=0; i!=cubePositions.size(); ++i)
-        {
-            model = glm::mat4(1.0f);
-            model = glm::translate(model, cubePositions[i]);
-            blockShader.setMat4f("model", model);
-            cube.Draw();
-        }
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, cubePosition);
+        blockShader.setMat4f("model", model);
+        cube.Draw();
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
         // Sphere
@@ -143,7 +138,7 @@ int main(int argc, char** argv)
             float dt = deltaTime / n_substeps;
             for (unsigned int step=0; step!= n_substeps; ++step){
                 // Move the ball i.e. update position and speed
-                move(spheres[i], dt, cubePositions[0]);
+                move(spheres[i], dt, cubePosition);
 
                 // Check for collisions
                 for (std::vector<Sphere>::size_type j=0; j != spheres.size(); ++j){
