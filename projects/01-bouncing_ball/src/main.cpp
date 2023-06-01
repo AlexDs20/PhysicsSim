@@ -118,8 +118,7 @@ void move(Sphere& s, float dt, glm::vec3 centerBox){
 }
 
 
-int main(int argc, char** argv)
-{
+GLFWwindow* setupGL(const std::string &title, unsigned int w, unsigned int h){
     // ------------------------------------
     //      Init glfw, glad, window
     // ------------------------------------
@@ -136,13 +135,13 @@ int main(int argc, char** argv)
 
     // glfw window creation
     // --------------------
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "PhysicsSim", NULL, NULL);
+    GLFWwindow *window = glfwCreateWindow(w, h, title.c_str(), NULL, NULL);
 
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
-        return -1;
+        return nullptr;
     }
     glfwMakeContextCurrent( window );
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
@@ -157,8 +156,18 @@ int main(int argc, char** argv)
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
         std::cout << "Failed to initialize GLAD" << std::endl;
-        return -1;
+        return nullptr;
     }
+    return window;
+};
+
+
+int main(int argc, char** argv)
+{
+    std::string title = "PhysicsSim";
+    unsigned int width = 1920;
+    unsigned int height = 1080;
+    GLFWwindow *window = setupGL(title, width, height);
 
     Shader blockShader("../projects/01-bouncing_ball/resources/shaders/vertex.vs", \
                        "../projects/01-bouncing_ball/resources/shaders/fragment.fs");
@@ -176,7 +185,6 @@ int main(int argc, char** argv)
     // Define light stuff
     glm::vec3 lightPos(0.0f, 0.6f, 0.0f);
     glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
-
     glm::vec3 blockColor(1.0f, 0.5f, 0.31f);
 
     Sphere2 sphere;
@@ -197,8 +205,8 @@ int main(int argc, char** argv)
     glm::mat4 view;
     glm::mat4 model;
 
-    glEnable(GL_DEPTH_TEST);
 
+    glEnable(GL_DEPTH_TEST);
     unsigned int n_substeps = 5;
 
     // render loop
