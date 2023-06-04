@@ -33,6 +33,11 @@ float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 
+const std::string block_v_shader("../projects/01-bouncing_ball/resources/shaders/vertex.vs");
+const std::string block_f_shader("../projects/01-bouncing_ball/resources/shaders/fragment.fs");
+const std::string light_v_shader("../projects/01-bouncing_ball/resources/shaders/light_cube.vs");
+const std::string light_f_shader("../projects/01-bouncing_ball/resources/shaders/light_cube.fs");
+
 int main(int argc, char** argv)
 {
     std::string title = "PhysicsSim";
@@ -40,11 +45,9 @@ int main(int argc, char** argv)
     unsigned int height = 1080;
     GLFWwindow *window = setupGL(title, width, height);
 
-    Shader blockShader("../projects/01-bouncing_ball/resources/shaders/vertex.vs", \
-                       "../projects/01-bouncing_ball/resources/shaders/fragment.fs");
+    Shader blockShader(block_v_shader.c_str(), block_f_shader.c_str());
 
-    Shader lightShader("../projects/01-bouncing_ball/resources/shaders/light_cube.vs", \
-                       "../projects/01-bouncing_ball/resources/shaders/light_cube.fs");
+    Shader lightShader(light_v_shader.c_str(), light_f_shader.c_str());
 
     // Create a cube -> light and box to keep balls inside
     Cube cube;
