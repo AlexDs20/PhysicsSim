@@ -93,6 +93,10 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath)
 
 }
 
+Shader::~Shader(){
+    glDeleteProgram(ID);
+}
+
 void Shader::use()
 {
     glUseProgram(ID);
