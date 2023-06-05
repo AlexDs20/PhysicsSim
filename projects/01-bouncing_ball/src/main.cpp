@@ -33,6 +33,11 @@ float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 
+const std::string block_v_shader("../projects/01-bouncing_ball/resources/shaders/vertex.vs");
+const std::string block_f_shader("../projects/01-bouncing_ball/resources/shaders/fragment.fs");
+const std::string light_v_shader("../projects/01-bouncing_ball/resources/shaders/light_cube.vs");
+const std::string light_f_shader("../projects/01-bouncing_ball/resources/shaders/light_cube.fs");
+
 int main(int argc, char** argv)
 {
     std::string title = "PhysicsSim";
@@ -40,11 +45,9 @@ int main(int argc, char** argv)
     unsigned int height = 1080;
     GLFWwindow *window = setupGL(title, width, height);
 
-    Shader blockShader("../projects/01-bouncing_ball/resources/shaders/vertex.vs", \
-                       "../projects/01-bouncing_ball/resources/shaders/fragment.fs");
+    Shader blockShader(block_v_shader.c_str(), block_f_shader.c_str());
 
-    Shader lightShader("../projects/01-bouncing_ball/resources/shaders/light_cube.vs", \
-                       "../projects/01-bouncing_ball/resources/shaders/light_cube.fs");
+    Shader lightShader(light_v_shader.c_str(), light_f_shader.c_str());
 
     // Create a cube -> light and box to keep balls inside
     Cube cube;
@@ -58,15 +61,18 @@ int main(int argc, char** argv)
 
     Sphere2 sphere;
 
-    unsigned int n_spheres = 50;
+    unsigned int n_spheres = 1000;
     std::vector<Sphere> spheres(n_spheres);
 
-    for (unsigned int i=0; i!= n_spheres; ++i){
-        spheres[i].pos = glm::ballRand(0.25f);         // The box is centered at (0,0,0) and side of size of 0.5.
-        spheres[i].vel = glm::ballRand(0.25f);
-        spheres[i].color = glm::ballRand(0.5f)+0.5f;
-        spheres[i].radius = 0.05;
-        spheres[i].m = M_PI * spheres[i].radius * spheres[i].radius;
+    double xmin=-0.5f, xmax=0.5f;         // The box is centered at (0,0,0) and side of size of 0.5.
+    double vmin=-0.001f, vmax=0.001f;
+
+    for (std::vector<Sphere>::iterator it = spheres.begin(); it!=spheres.end(); ++it){
+        it->pos = glm::linearRand(glm::vec3(xmin), glm::vec3(xmax));
+        it->vel = glm::linearRand(glm::vec3(vmin), glm::vec3(vmax));
+        it->color = glm::linearRand(glm::vec3(0.0f), glm::vec3(1.0f));
+        it->radius = 0.03;
+        it->m = M_PI * it->radius * it->radius;
     }
 
     // Transforms
@@ -125,25 +131,25 @@ int main(int argc, char** argv)
 
         // Sphere
         // Use same shader as for block
-        for (std::vector<Sphere>::size_type i = 0; i!=spheres.size(); ++i){
+        for (std::vector<Sphere>::iterator it=spheres.begin(); it!=spheres.end(); ++it){
             // Draw
             model = glm::mat4(1.0f);
-            model = glm::translate(model, spheres[i].pos);
-            model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f) * spheres[i].radius);
+            model = glm::translate(model, it->pos);
+            model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f) * it->radius);
             blockShader.setMat4f("model", model);
-            blockShader.set3f("objectColor", spheres[i].color);
+            blockShader.set3f("objectColor", it->color);
             sphere.Draw();
 
             // Create substeps for stability
             float dt = deltaTime / n_substeps;
             for (unsigned int step=0; step!= n_substeps; ++step){
                 // Move the ball i.e. update position and speed
-                move(spheres[i], dt, cubePosition);
+                move(*it, dt, cubePosition);
 
                 // Check for collisions
-                for (std::vector<Sphere>::size_type j=0; j != spheres.size(); ++j){
-                    if (i != j)
-                        collision(spheres[i], spheres[j]);
+                for (std::vector<Sphere>::iterator it2=spheres.begin(); it2!=spheres.end(); ++it2){
+                    if (it != it2)
+                        collision(*it, *it2);
                 }
             }
         }

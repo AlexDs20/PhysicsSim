@@ -14,6 +14,7 @@ class Shader
 
     // constructor reads and builds the shader
     Shader(const char* vertexPath, const char* fragmentPath);
+    ~Shader();
 
     // Use this shade program
     void use();
