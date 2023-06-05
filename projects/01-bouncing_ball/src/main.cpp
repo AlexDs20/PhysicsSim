@@ -61,17 +61,17 @@ int main(int argc, char** argv)
 
     Sphere2 sphere;
 
-    unsigned int n_spheres = 200;
+    unsigned int n_spheres = 1000;
     std::vector<Sphere> spheres(n_spheres);
 
     double xmin=-0.5f, xmax=0.5f;         // The box is centered at (0,0,0) and side of size of 0.5.
-    double vmin=-0.01f, vmax=0.01f;
+    double vmin=-0.001f, vmax=0.001f;
 
     for (std::vector<Sphere>::iterator it = spheres.begin(); it!=spheres.end(); ++it){
         it->pos = glm::linearRand(glm::vec3(xmin), glm::vec3(xmax));
         it->vel = glm::linearRand(glm::vec3(vmin), glm::vec3(vmax));
         it->color = glm::linearRand(glm::vec3(0.0f), glm::vec3(1.0f));
-        it->radius = 0.05;
+        it->radius = 0.03;
         it->m = M_PI * it->radius * it->radius;
     }
 
@@ -82,7 +82,7 @@ int main(int argc, char** argv)
 
 
     glEnable(GL_DEPTH_TEST);
-    unsigned int n_substeps = 10;
+    unsigned int n_substeps = 5;
 
     // render loop
     // -----------

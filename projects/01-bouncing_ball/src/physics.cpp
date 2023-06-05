@@ -11,7 +11,7 @@ float energy(glm::vec3 pos, glm::vec3 v){
 
 void collision(Sphere& s1, Sphere& s2){
     // elasticity
-    float e = 1.00f;
+    float e = 0.95f;
 
     glm::vec3 normal(s2.pos - s1.pos);
     float d = glm::length(normal);
@@ -60,8 +60,8 @@ void move(Sphere& s, float dt, glm::vec3 centerBox){
     if (s.pos.y - s.radius < centerBox.y - 0.5){
         // Remove the potential energy gained from the velocity
         // dE = 0 => mgdh = -mvdv => dv = -gdh/v => v = v - gdh/v
-        dh = centerBox.y - 0.5 - (s.pos.y - s.radius) ;
-        s.vel.y -= g.y * dh / s.vel.y;
+        // dh = centerBox.y - 0.5 - (s.pos.y - s.radius) ;
+        // s.vel.y -= g.y * dh / s.vel.y;
         s.pos.y = centerBox.y - 0.5 + s.radius;
         s.vel.y = -s.vel.y;
     }
