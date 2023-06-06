@@ -1,6 +1,7 @@
 #include <glm/glm.hpp>
 
 #include "object.hpp"
+#include <iostream>
 
 
 float energy(glm::vec3 pos, glm::vec3 v){
@@ -40,43 +41,34 @@ void collision(Sphere& s1, Sphere& s2){
 };
 
 
-void move(Sphere& s, float dt, glm::vec3 centerBox){
+
+void move(Sphere& s, float dt, glm::vec3 center, float r){
     /*
-     F = ma
-     F = m dv/dt
+    F = ma
+    F = m dv/dt
         dv = (F/m) * dt
         vi - vi-1 = (F/m) * dt
         vi = vi-1 + (F/m) * dt
     v = dx/dt
         dx = v * dt
         xi = xi-1 + v * dt
+
+    In practice:
+    v = v + (F/m) * dt
+    p <- x                  save initial position
+    x = x + v * dt          move the particle
+    x = constraint(x)       apply constraints
+    v = (x - p) / dt
     */
     glm::vec3 g(0.0f, -10.f, 0.0f);
-    float dh;
 
     s.vel += g * dt;
+    glm::vec3 p = s.pos;
     s.pos += s.vel * dt;
 
-    if (s.pos.y - s.radius < centerBox.y - 0.5){
-        // Remove the potential energy gained from the velocity
-        // dE = 0 => mgdh = -mvdv => dv = -gdh/v => v = v - gdh/v
-        // dh = centerBox.y - 0.5 - (s.pos.y - s.radius) ;
-        // s.vel.y -= g.y * dh / s.vel.y;
-        s.pos.y = centerBox.y - 0.5 + s.radius;
-        s.vel.y = -s.vel.y;
-    }
-    if (s.pos.x + s.radius > centerBox.x + 0.5 ){
-        s.pos.x = centerBox.x + 0.5 - s.radius;
-        s.vel.x = -s.vel.x;
-    } else if (s.pos.x - s.radius < centerBox.x - 0.5){
-        s.pos.x = centerBox.x - 0.5 + s.radius;
-        s.vel.x = -s.vel.x;
-    }
-    if (s.pos.z + s.radius > centerBox.z + 0.5 ){
-        s.pos.z = centerBox.z + 0.5 - s.radius;
-        s.vel.z = -s.vel.z;
-    } else if (s.pos.z - s.radius < centerBox.z - 0.5){
-        s.pos.z = centerBox.z - 0.5 + s.radius;
-        s.vel.z = -s.vel.z;
-    }
+    // constraint
+    glm::vec3 dir = glm::normalize(s.pos - center);
+    s.pos = center + r * dir;
+
+    s.vel = (s.pos - p) / dt;
 }

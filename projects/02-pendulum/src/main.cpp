@@ -23,7 +23,7 @@ const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
 
 // camera
-Camera camera(glm::vec3(0.5f, 0.5f, 0.5f));
+Camera camera(glm::vec3(0.5f, 0.5f, 1.5f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -51,30 +51,21 @@ int main(int argc, char** argv)
 
     // Create a cube -> light and box to keep balls inside
     Cube cube;
-
-    glm::vec3 cubePosition(0.0f,  0.0f,  0.0f);
-
     // Define light stuff
     glm::vec3 lightPos(0.0f, 0.6f, 0.0f);
     glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
     glm::vec3 blockColor(1.0f, 0.5f, 0.31f);
 
-    Sphere2 sphere;
+    Sphere2 sphere_obj;
 
-    unsigned int n_spheres = 100;
-    std::vector<Sphere> spheres(n_spheres);
+    double vmin=-0.1f, vmax=0.1f;
 
-    double xmin=-0.5f, xmax=0.5f;         // The box is centered at (0,0,0) and side of size of 0.5.
-    double vmin=-0.001f, vmax=0.001f;
-
-    for (std::vector<Sphere>::iterator it = spheres.begin(); it!=spheres.end(); ++it){
-        it->pos = glm::linearRand(glm::vec3(xmin), glm::vec3(xmax));
-        it->vel = glm::linearRand(glm::vec3(vmin), glm::vec3(vmax));
-        it->color = glm::linearRand(glm::vec3(0.0f), glm::vec3(1.0f));
-        it->radius = 0.03;
-        it->m = M_PI * it->radius * it->radius;
-    }
-
+    Sphere sphere;
+    sphere.pos = glm::normalize(glm::vec3(0.7f, 0.7f, 0.0f));
+    sphere.vel = glm::vec3(-1.0f, -1.0f, 1.0f);
+    sphere.color = glm::linearRand(glm::vec3(0.0f), glm::vec3(1.0f));
+    sphere.radius = 0.05;
+    sphere.m = M_PI * sphere.radius * sphere.radius;
     // Transforms
     glm::mat4 proj;
     glm::mat4 view;
@@ -82,7 +73,10 @@ int main(int argc, char** argv)
 
 
     glEnable(GL_DEPTH_TEST);
-    unsigned int n_substeps = 5;
+    unsigned int n_substeps = 10;
+
+    glm::vec3 center(0.0f, -1.0f, 0.0f);
+    float radius = 1.0f;
 
     // render loop
     // -----------
@@ -114,45 +108,37 @@ int main(int argc, char** argv)
 
         // Select shader program and set uniforms
         blockShader.use();
-        blockShader.set3f("objectColor", blockColor);
         blockShader.set3f("lightColor", lightColor);
         blockShader.set3f("lightPos", lightPos);
         blockShader.set3f("viewPos", camera.Position);
         blockShader.setMat4f("proj", proj);
         blockShader.setMat4f("view", view);
 
-        // Render the box as see-through
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+        // plot constraint
         model = glm::mat4(1.0f);
-        model = glm::translate(model, cubePosition);
+        model = glm::translate(model, center);
+        model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f) * radius);
         blockShader.setMat4f("model", model);
-        cube.Draw();
+        blockShader.set3f("objectColor", glm::vec3(0.3, 0.5, 0.5));
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        sphere_obj.Draw();
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-        // Sphere
-        // Use same shader as for block
-        for (std::vector<Sphere>::iterator it=spheres.begin(); it!=spheres.end(); ++it){
-            // Draw
+            // plot dynamics
             model = glm::mat4(1.0f);
-            model = glm::translate(model, it->pos);
-            model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f) * it->radius);
+            model = glm::translate(model, sphere.pos);
+            model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f) * sphere.radius);
             blockShader.setMat4f("model", model);
-            blockShader.set3f("objectColor", it->color);
-            sphere.Draw();
+            blockShader.set3f("objectColor", sphere.color);
+            sphere_obj.Draw();
 
             // Create substeps for stability
             float dt = deltaTime / n_substeps;
-            for (unsigned int step=0; step!= n_substeps; ++step){
+            for (unsigned int step=0; step!=n_substeps; ++step){
                 // Move the ball i.e. update position and speed
-                move(*it, dt, cubePosition);
-
-                // Check for collisions
-                for (std::vector<Sphere>::iterator it2=spheres.begin(); it2!=spheres.end(); ++it2){
-                    if (it != it2)
-                        collision(*it, *it2);
-                }
+                move(sphere, dt, center, radius);
             }
-        }
 
         // Draw the light!
         lightShader.use();
@@ -174,6 +160,6 @@ int main(int argc, char** argv)
     // glfw: terminate, clear all previous allocated GLFW resources
     // ------------------------------------------------------------
     glfwDestroyWindow(window);
-    glfwTerminate();
+    // glfwTerminate();
     return 0;
 }

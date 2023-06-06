@@ -9,9 +9,6 @@
 class Shader
 {
   public:
-    // program ID
-    unsigned int ID;
-
     // constructor reads and builds the shader
     Shader(const char* vertexPath, const char* fragmentPath);
     ~Shader();
@@ -27,5 +24,11 @@ class Shader
     void set3f(const std::string &name, const glm::vec3& vec) const;
     void set4f(const std::string &name, const glm::vec4& vec) const;
     void setMat4f(const std::string &name, const glm::mat4 &mat) const;
+
+  private:
+    // program ID
+    unsigned int ID;
+
+    void checkCompileErrors(unsigned int shader, std::string type);
 };
 #endif
