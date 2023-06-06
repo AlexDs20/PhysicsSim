@@ -53,3 +53,4 @@ include "deps/glad.lua"
 include "deps/glm.lua"
 
 include "projects/01-bouncing_ball"
+include "projects/02-pendulum"
