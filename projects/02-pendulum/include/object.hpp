@@ -2,6 +2,7 @@
 #define OBJECT_HPP
 
 #include <vector>
+#include <glm/glm.hpp>
 
 struct Sphere {
     glm::vec3 pos;
@@ -10,12 +11,19 @@ struct Sphere {
     float radius;
     float m;
 };
+struct Cube {
+    Cube(glm::vec3 size = glm::vec3(1.0f)): size(size){};
+    glm::vec3 pos;
+    glm::vec3 size;
+    glm::vec3 color;
+    float m;
+};
 
 
-class Cube {
+class MeshCube {
     public:
-        Cube();
-        ~Cube();
+        MeshCube();
+        ~MeshCube();
         void Draw() const;
 
     private:
@@ -27,10 +35,10 @@ class Cube {
         void setup();
 };
 
-class Sphere2 {
+class MeshSphere {
     public:
-        Sphere2(unsigned int sectorCount=32, unsigned int stackCount=16);
-        ~Sphere2();
+        MeshSphere(unsigned int sectorCount=32, unsigned int stackCount=16);
+        ~MeshSphere();
         void Draw() const;
 
     private:

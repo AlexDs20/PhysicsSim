@@ -38,6 +38,10 @@ const std::string block_f_shader("../projects/01-bouncing_ball/resources/shaders
 const std::string light_v_shader("../projects/01-bouncing_ball/resources/shaders/light_cube.vs");
 const std::string light_f_shader("../projects/01-bouncing_ball/resources/shaders/light_cube.fs");
 
+void print(glm::vec3 v){
+    std::cout << v.x << ", " << v.y << ", " << v.z << std::endl;
+};
+
 int main(int argc, char** argv)
 {
     std::string title = "PhysicsSim";
@@ -50,15 +54,20 @@ int main(int argc, char** argv)
     Shader lightShader(light_v_shader.c_str(), light_f_shader.c_str());
 
     // Create a cube -> light and box to keep balls inside
-    Cube cube;
+    MeshCube mesh_cube;
+    // Create a sphere -> object moving
+    MeshSphere mesh_sphere;
+
     // Define light stuff
-    glm::vec3 lightPos(0.0f, 0.6f, 0.0f);
+    Cube light_cube;
+    light_cube.pos = glm::vec3(0.0f, 0.6f, 0.0f);
+    light_cube.color = glm::vec3(1.0f, 0.5f, 0.31f);
     glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
-    glm::vec3 blockColor(1.0f, 0.5f, 0.31f);
 
-    Sphere2 sphere_obj;
+    Cube axle(glm::vec3(0.05f, 1.0f, 0.05f));
+    axle.pos = glm::vec3(0.0f, -0.5f, 0.0f);
+    axle.color = glm::vec3(1.0f, 0.5f, 0.31f);
 
-    double vmin=-0.1f, vmax=0.1f;
 
     Sphere sphere;
     sphere.pos = glm::normalize(glm::vec3(0.7f, 0.7f, 0.0f));
@@ -66,16 +75,16 @@ int main(int argc, char** argv)
     sphere.color = glm::linearRand(glm::vec3(0.0f), glm::vec3(1.0f));
     sphere.radius = 0.05;
     sphere.m = M_PI * sphere.radius * sphere.radius;
+
     // Transforms
     glm::mat4 proj;
     glm::mat4 view;
     glm::mat4 model;
 
-
     glEnable(GL_DEPTH_TEST);
-    unsigned int n_substeps = 10;
+    unsigned int n_substeps = 100;
 
-    glm::vec3 center(0.0f, -1.0f, 0.0f);
+    glm::vec3 center(0.0f, 0.0f, 0.0f);
     float radius = 1.0f;
 
     // render loop
@@ -88,7 +97,7 @@ int main(int argc, char** argv)
 
         // Time for frame
         std::streamsize prec = std::cout.precision();
-        std::cout << std::setprecision(5) << deltaTime << " ms\r" << std::setprecision(prec) << std::flush;
+        // std::cout << std::setprecision(5) << deltaTime << " ms\r" << std::setprecision(prec) << std::flush;
 
         // process inputs
         processInput(window);
@@ -103,13 +112,13 @@ int main(int argc, char** argv)
 
         // Rotate the light
         float amp = 1.5f;
-        lightPos.x = amp * sin(time);
-        lightPos.z = amp * cos(time);
+        light_cube.pos.x = amp * sin(time);
+        light_cube.pos.z = amp * cos(time);
 
         // Select shader program and set uniforms
         blockShader.use();
         blockShader.set3f("lightColor", lightColor);
-        blockShader.set3f("lightPos", lightPos);
+        blockShader.set3f("lightPos", light_cube.pos);
         blockShader.set3f("viewPos", camera.Position);
         blockShader.setMat4f("proj", proj);
         blockShader.setMat4f("view", view);
@@ -122,34 +131,50 @@ int main(int argc, char** argv)
         blockShader.setMat4f("model", model);
         blockShader.set3f("objectColor", glm::vec3(0.3, 0.5, 0.5));
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        sphere_obj.Draw();
+        mesh_sphere.Draw();
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-            // plot dynamics
-            model = glm::mat4(1.0f);
-            model = glm::translate(model, sphere.pos);
-            model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f) * sphere.radius);
-            blockShader.setMat4f("model", model);
-            blockShader.set3f("objectColor", sphere.color);
-            sphere_obj.Draw();
+        // plot dynamics
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, sphere.pos);
+        model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f) * sphere.radius);
+        blockShader.setMat4f("model", model);
+        blockShader.set3f("objectColor", sphere.color);
+        mesh_sphere.Draw();
 
-            // Create substeps for stability
-            float dt = deltaTime / n_substeps;
-            for (unsigned int step=0; step!=n_substeps; ++step){
-                // Move the ball i.e. update position and speed
-                move(sphere, dt, center, radius);
-            }
+        // Create substeps for stability
+        float dt = deltaTime / n_substeps;
+        for (unsigned int step=0; step!=n_substeps; ++step){
+            // Move the ball i.e. update position and speed
+            move(sphere, dt, center, radius);
+        }
+
+        // Draw "axle"
+        axle.pos = center + (sphere.pos - center) / 2.0f;
+        glm::vec3 cross = glm::cross(glm::vec3(0.0f, -1.0f, 0.0f), sphere.pos - center);
+        glm::vec3 rotAx = glm::normalize(cross);
+        float angle = glm::asin( glm::length(cross) / ( 1 * glm::length(sphere.pos - center) )  );
+        if (sphere.pos.y > center.y)
+            angle = glm::radians(180.0f) - angle;
+
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, axle.pos);
+        model = glm::rotate(model, angle, rotAx);
+        model = glm::scale(model, axle.size);
+        blockShader.setMat4f("model", model);
+        blockShader.set3f("objectColor", axle.color);
+        mesh_cube.Draw();
 
         // Draw the light!
         lightShader.use();
         model = glm::mat4(1.0f);
-        model = glm::translate(model, lightPos);
+        model = glm::translate(model, light_cube.pos);
         model = glm::scale(model, glm::vec3(0.2f));
         lightShader.set3f("lightColor", lightColor);
         lightShader.setMat4f("model", model);
         lightShader.setMat4f("proj", proj);
         lightShader.setMat4f("view", view);
-        cube.Draw();
+        mesh_cube.Draw();
 
         // swap buffers and poll IO events (key pressed/released, ...)
         // -----------------------------------------------------------

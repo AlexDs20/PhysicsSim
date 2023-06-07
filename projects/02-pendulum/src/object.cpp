@@ -5,22 +5,22 @@
 
 #include "object.hpp"
 
-Cube::Cube () {
+MeshCube::MeshCube () {
     construct();
     setup();
 };
-Cube::~Cube() {
+MeshCube::~MeshCube() {
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
     glDeleteBuffers(1, &EBO);
 };
 
-void Cube::Draw() const {
+void MeshCube::Draw() const {
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, (unsigned int) indices.size(), GL_UNSIGNED_INT, 0);
 };
 
-void Cube::construct() {
+void MeshCube::construct() {
     vertices = {
         -0.5f, -0.5f, -0.5f,   0.0f,  0.0f, -1.0f,         // Front, bottom first up then     2---3
          0.5f, -0.5f, -0.5f,   0.0f,  0.0f, -1.0f,         //                                 | \ |
@@ -73,7 +73,7 @@ void Cube::construct() {
     };
 };
 
-void Cube::setup() {
+void MeshCube::setup() {
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &EBO);
@@ -98,25 +98,25 @@ void Cube::setup() {
 
 
 
-Sphere2::Sphere2(unsigned int sectorCount, unsigned int stackCount): sectorCount(sectorCount), stackCount(stackCount)  {
+MeshSphere::MeshSphere(unsigned int sectorCount, unsigned int stackCount): sectorCount(sectorCount), stackCount(stackCount)  {
     constructVertices();
     constructIndices();
     setup();
 };
 
-Sphere2::~Sphere2(){
+MeshSphere::~MeshSphere(){
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
     glDeleteBuffers(1, &EBO);
 };
 
-void Sphere2::Draw() const {
+void MeshSphere::Draw() const {
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, (unsigned int)indices.size(), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 };
 
-void Sphere2::constructVertices() {
+void MeshSphere::constructVertices() {
     float radius = 1.0f;
     float x, y, z, xy;                              // vertex position
     float nx, ny, nz, lengthInv = 1.0f / radius;    // vertex normal
@@ -162,7 +162,7 @@ void Sphere2::constructVertices() {
     }
 };
 
-void Sphere2::constructIndices(){
+void MeshSphere::constructIndices(){
     // generate CCW index list of sphere triangles
     // k1--k1+1
     // |  / |
@@ -196,7 +196,7 @@ void Sphere2::constructIndices(){
     }
 };
 
-void Sphere2::setup(){
+void MeshSphere::setup(){
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &EBO);
