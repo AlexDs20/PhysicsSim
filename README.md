@@ -12,3 +12,4 @@ Simple simulation of bodies running (hopefully) in real time.
 
 # Preview
 ![](previews/ball.gif)
+![](projects/02-pendulum/resources/printscreen/pendulum_and_sphere.png)
