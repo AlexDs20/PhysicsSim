@@ -42,7 +42,7 @@ void collision(Sphere& s1, Sphere& s2){
 
 
 
-void move(Sphere& s, float dt, glm::vec3 center, float r){
+void move(Sphere& s, float dt){
     /*
     F = ma
     F = m dv/dt
@@ -63,12 +63,12 @@ void move(Sphere& s, float dt, glm::vec3 center, float r){
     glm::vec3 g(0.0f, -10.f, 0.0f);
 
     s.vel += g * dt;
-    glm::vec3 p = s.pos;
+    // glm::vec3 p = s.pos;
     s.pos += s.vel * dt;
 
-    // constraint
-    glm::vec3 dir = glm::normalize(s.pos - center);
-    s.pos = center + r * dir;
+    // // constraint
+    // glm::vec3 dir = glm::normalize(s.pos - center);
+    // s.pos = center + r * dir;
 
-    s.vel = (s.pos - p) / dt;
+    // s.vel = (s.pos - p) / dt;
 }

@@ -6,6 +6,7 @@
 
 struct Sphere {
     glm::vec3 pos;
+    glm::vec3 prev_pos;
     glm::vec3 vel;
     glm::vec3 color;
     float radius;

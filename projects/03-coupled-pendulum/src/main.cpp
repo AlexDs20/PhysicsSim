@@ -78,13 +78,14 @@ int main(int argc, char** argv)
         float rod_length = 1.0f;
         // Set starting position satisfying distance from previous ball
         it->pos = start + glm::ballRand(rod_length);
+        it->prev_pos = it->pos;
         start = it->pos;
 
         // Set other spheres properties
-        it->vel = glm::ballRand(0.1f);
+        it->vel = glm::ballRand(0.5f);
         it->color = glm::linearRand(glm::vec3(0.0f), glm::vec3(1.0f));
-        it->radius = glm::linearRand(0.01f, 0.2f);
-        it->m = M_PI * it->radius * it->radius;
+        it->radius = glm::linearRand(0.1f, 0.2f);
+        it->m = (4/3) * M_PI * it->radius * it->radius * it->radius;
     }
 
     // Transforms
@@ -93,7 +94,7 @@ int main(int argc, char** argv)
     glm::mat4 model;
 
     glEnable(GL_DEPTH_TEST);
-    unsigned int n_substeps = 10;
+    unsigned int n_substeps = 100;
 
     // render loop
     // -----------
@@ -105,7 +106,7 @@ int main(int argc, char** argv)
 
         // Time for frame
         std::streamsize prec = std::cout.precision();
-        // std::cout << std::setprecision(5) << deltaTime << " ms\r" << std::setprecision(prec) << std::flush;
+        std::cout << std::setprecision(5) << deltaTime << " ms\r" << std::setprecision(prec) << std::flush;
 
         // process inputs
         processInput(window);
@@ -131,36 +132,38 @@ int main(int argc, char** argv)
         blockShader.setMat4f("proj", proj);
         blockShader.setMat4f("view", view);
 
-        // plot spheres showing constraints
-        // TODO: This should be under the substeps so that it moves enough
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        for (std::vector<Sphere>::size_type i=0; i!=spheres.size(); ++i) {
-            model = glm::mat4(1.0f);
-            if (i == 0)
-                model = glm::translate(model, center);
-            else
-                model = glm::translate(model, spheres[i].pos);
-            model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f) * 1.0f);      // should add "rod length" instead
-            blockShader.setMat4f("model", model);
-            blockShader.set3f("objectColor", glm::vec3(0.3, 0.5, 0.5));
-            mesh_sphere.Draw();
+        float dt = deltaTime / n_substeps;
+        for (unsigned int step=0; step!=n_substeps; ++step){
+            // Move the particles
+            for (std::vector<Sphere>::iterator it=spheres.begin(); it!=spheres.end(); ++it) {
+                // Plot the spheres
+                model = glm::mat4(1.0f);
+                model = glm::translate(model, it->pos);
+                model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f) * it->radius);
+                blockShader.setMat4f("model", model);
+                blockShader.set3f("objectColor", it->color);
+                mesh_sphere.Draw();
+
+                // move the spheres
+                it->prev_pos = it->pos;
+                move(*it, dt);
+            }
+
+            // Solve constraints
+            start = center;
+            for (std::vector<Sphere>::iterator it=spheres.begin(); it!=spheres.end(); ++it) {
+                glm::vec3 dir = glm::normalize(it->pos - start);
+                // TODO: change 1.0f to rod length
+                it->pos = start + 1.0f * dir;
+                start = it->pos;
+            }
+
+            // Update velocities
+            for (std::vector<Sphere>::iterator it=spheres.begin(); it!=spheres.end(); ++it) {
+                it->vel = (it->pos - it->prev_pos) / dt;
+            }
+
         }
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-        //  // Solve dynamics
-        //  model = glm::mat4(1.0f);
-        //  model = glm::translate(model, sphere.pos);
-        //  model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f) * sphere.radius);
-        //  blockShader.setMat4f("model", model);
-        //  blockShader.set3f("objectColor", sphere.color);
-        //  mesh_sphere.Draw();
-
-        //  // Create substeps for stability
-        //  float dt = deltaTime / n_substeps;
-        //  for (unsigned int step=0; step!=n_substeps; ++step){
-        //      // Move the ball i.e. update position and speed
-        //      move(sphere, dt, center, radius);
-        //  }
 
         // Draw the light!
         lightShader.use();

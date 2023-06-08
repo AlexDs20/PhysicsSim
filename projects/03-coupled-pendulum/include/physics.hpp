@@ -6,6 +6,6 @@
 
 float energy(glm::vec3 pos, glm::vec3 v);
 void collision(Sphere& s1, Sphere& s2);
-void move(Sphere& s, float dt, glm::vec3 center, float r);
+void move(Sphere& s, float dt);
 
 #endif
