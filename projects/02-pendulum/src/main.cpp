@@ -64,7 +64,7 @@ int main(int argc, char** argv)
     light_cube.color = glm::vec3(1.0f, 0.5f, 0.31f);
     glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
 
-    Cube axle(glm::vec3(0.05f, 1.0f, 0.05f));
+    Cube axle(glm::vec3(0.02f, 1.0f, 0.02f));
     axle.pos = glm::vec3(0.0f, -0.5f, 0.0f);
     axle.color = glm::vec3(1.0f, 0.5f, 0.31f);
 
@@ -97,7 +97,7 @@ int main(int argc, char** argv)
 
         // Time for frame
         std::streamsize prec = std::cout.precision();
-        // std::cout << std::setprecision(5) << deltaTime << " ms\r" << std::setprecision(prec) << std::flush;
+        std::cout << std::setprecision(5) << deltaTime << " ms\r" << std::setprecision(prec) << std::flush;
 
         // process inputs
         processInput(window);
@@ -116,6 +116,8 @@ int main(int argc, char** argv)
         light_cube.pos.z = amp * cos(time);
 
         // Select shader program and set uniforms
+        // Create substeps for stability
+        float dt = deltaTime / n_substeps;
         blockShader.use();
         blockShader.set3f("lightColor", lightColor);
         blockShader.set3f("lightPos", light_cube.pos);
@@ -123,47 +125,44 @@ int main(int argc, char** argv)
         blockShader.setMat4f("proj", proj);
         blockShader.setMat4f("view", view);
 
-
-        // plot constraint
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, center);
-        model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f) * radius);
-        blockShader.setMat4f("model", model);
-        blockShader.set3f("objectColor", glm::vec3(0.3, 0.5, 0.5));
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        mesh_sphere.Draw();
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-        // plot dynamics
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, sphere.pos);
-        model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f) * sphere.radius);
-        blockShader.setMat4f("model", model);
-        blockShader.set3f("objectColor", sphere.color);
-        mesh_sphere.Draw();
-
-        // Create substeps for stability
-        float dt = deltaTime / n_substeps;
         for (unsigned int step=0; step!=n_substeps; ++step){
+            // plot constraint
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, center);
+            model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f) * radius);
+            blockShader.setMat4f("model", model);
+            blockShader.set3f("objectColor", glm::vec3(0.3, 0.5, 0.5));
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            mesh_sphere.Draw();
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+            // plot dynamics
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, sphere.pos);
+            model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f) * sphere.radius);
+            blockShader.setMat4f("model", model);
+            blockShader.set3f("objectColor", sphere.color);
+            mesh_sphere.Draw();
+
             // Move the ball i.e. update position and speed
             move(sphere, dt, center, radius);
+
+            // Draw "axle"
+            axle.pos = center + (sphere.pos - center) / 2.0f;
+            glm::vec3 cross = glm::cross(glm::vec3(0.0f, -1.0f, 0.0f), sphere.pos - center);
+            glm::vec3 rotAx = glm::normalize(cross);
+            float angle = glm::asin( glm::length(cross) / ( 1 * glm::length(sphere.pos - center) )  );
+            if (sphere.pos.y > center.y)
+                angle = glm::radians(180.0f) - angle;
+
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, axle.pos);
+            model = glm::rotate(model, angle, rotAx);
+            model = glm::scale(model, axle.size);
+            blockShader.setMat4f("model", model);
+            blockShader.set3f("objectColor", axle.color);
+            mesh_cube.Draw();
         }
-
-        // Draw "axle"
-        axle.pos = center + (sphere.pos - center) / 2.0f;
-        glm::vec3 cross = glm::cross(glm::vec3(0.0f, -1.0f, 0.0f), sphere.pos - center);
-        glm::vec3 rotAx = glm::normalize(cross);
-        float angle = glm::asin( glm::length(cross) / ( 1 * glm::length(sphere.pos - center) )  );
-        if (sphere.pos.y > center.y)
-            angle = glm::radians(180.0f) - angle;
-
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, axle.pos);
-        model = glm::rotate(model, angle, rotAx);
-        model = glm::scale(model, axle.size);
-        blockShader.setMat4f("model", model);
-        blockShader.set3f("objectColor", axle.color);
-        mesh_cube.Draw();
 
         // Draw the light!
         lightShader.use();
